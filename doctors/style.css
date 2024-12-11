@@ -1,0 +1,23 @@
+.doctors{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 50px;
+}
+.doctors__items{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+.doctors__item{
+    cursor: pointer;
+    border: 1px solid black;
+    padding: 10px 20px;
+}
+.doctors__link-back{
+    padding: 10px 20px;
+    border: 1px solid gray;
+    border-radius: 10px;
+}
