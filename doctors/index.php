@@ -57,6 +57,11 @@ if(empty($doctor_name) && empty($action)){
         ->fetchAll();
 };
 
+$res = \Bitrix\Iblock\Elements\ElementTestListTable::getByPrimary(99, [
+    'select' => ['ID', 'NAME'],
+])->fetch();
+pr($res);
+
 ?>
     <?php if(!$doctor_name):?>
     <div class="doctors">
