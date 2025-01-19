@@ -11,3 +11,36 @@ function pr($var, $type = false) {
         print_r($var);
     echo '</pre>';
 }
+
+use Bitrix\Main\EventManager;
+
+$eventManager = EventManager::getInstance();
+
+// пользовательский тип для свойства инфоблока
+//$eventManager->AddEventHandler(
+//    'iblock',
+//    'OnIBlockPropertyBuildList',
+//    [
+//        'UserTypes\IBLink', // класс обработчик пользовательского типа свойства
+//        'GetUserTypeDescription'
+//    ]
+//);
+// кастомный тип для свойства инфоблока (мой)
+$eventManager->AddEventHandler(
+    'iblock',
+    'OnIBlockPropertyBuildList',
+    [
+        'UserTypes\IBCustom', // класс обработчик пользовательского типа свойства
+        'GetUserTypeDescription'
+    ]
+);
+
+// пользовательский тип для UF поля
+//$eventManager->AddEventHandler(
+//    'main',
+//    'OnUserTypeBuildList',
+//    [
+//        'UserTypes\FormatTelegramLink', // класс обработчик пользовательского типа UF поля
+//        'GetUserTypeDescription'
+//    ]
+//);
