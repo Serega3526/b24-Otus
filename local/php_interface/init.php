@@ -44,3 +44,5 @@ $eventManager->AddEventHandler(
 //        'GetUserTypeDescription'
 //    ]
 //);
+
+Bitrix\Main\UI\Extension::load(['popup', 'timeman.custom']);
