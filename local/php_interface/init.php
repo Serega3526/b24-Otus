@@ -25,6 +25,20 @@ $eventManager -> addEventHandler(
         'Events\IblockHandler',
         'onElementAfterAdd'
     ]);
+$eventManager -> addEventHandler(
+    "iblock",
+    "onAfterIBlockElementUpdate",
+    [
+        'Events\IblockHandler',
+        'onElementAfterUpdate'
+    ]);
+$eventManager -> addEventHandler(
+    "crm",
+    "OnAfterCrmDealUpdate",
+    [
+        'Events\IblockHandler',
+        'onDealAfterUpdate'
+    ]);
 //    'OnIBlockPropertyBuildList',
 //    [
 //        'UserTypes\IBLink', // класс обработчик пользовательского типа свойства

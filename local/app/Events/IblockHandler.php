@@ -2,69 +2,97 @@
 
 namespace Events;
 
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\ItemIdentifier;
 
 class IblockHandler
 {
-    public static $restrictHour = 21;
+    protected static $handlerDisallow = false;
 
     public static function onElementAfterAdd(&$arFields)
     {
+        if (self::$handlerDisallow)
+            return;
+        self::$handlerDisallow = true;
         if ($arFields["IBLOCK_ID"] != 44)
             return $arFields;
-
-        $arFields['NAME'] = 'Изменен в обработчике события ' . date('d.m.Y H:i:s');
-        $arFields['SDELKA'] = 33333333;
 
         if (!Loader::includeModule('crm')) {
             return;
         }
 
-//        $dealFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-//        $newDealItem = $dealFactory->createItem();
-//        $newDealItem->set('TITLE', 'Тестовая сделка D7 - ' . date('d-m-Y-H-i-s'));
-//        $dealAddOperation = $dealFactory->getAddOperation($newDealItem);
-//        $addResult = $dealAddOperation->launch();
+        $dealFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+        $newDealItem = $dealFactory->createItem();
+        $newDealItem->set('TITLE', $arFields['NAME']);
+        $newDealItem->set('CURRENCY_ID', 'RUB');
+        $newDealItem->set('OPPORTUNITY', (end($arFields['PROPERTY_VALUES']['96'])));
+        $newDealItem->set('ASSIGNED_BY_ID', $arFields['PROPERTY_VALUES']['93']);
+        $dealAddOperation = $dealFactory->getAddOperation($newDealItem);
+        $addResult = $dealAddOperation->launch();
+        $dealId = $addResult->getId();
 
-//        pr($newDealItem);
-//        $parent = new ItemIdentifier(\CCrmOwnerType::Deal);
-//        $child = new ItemIdentifier(\CCrmOwnerType::IBlock);
-//        /** @var bool $result */
-//        $result = Container::getInstance()->getRelationManager()->areItemsBound($parent, $child);
+        $arFields['PROPERTY_VALUES']['91'] = $dealId;
+
+        self::$handlerDisallow = false;
     }
 
     public static function onElementAfterUpdate(&$arFields)
     {
-//        file_put_contents($_SERVER['DOCUMENT_ROOT'].'/logIAU.txt', 'FIELDS: '.var_export($arFields, true).PHP_EOL, FILE_APPEND);
-
-        if (!Loader::includeModule('im')) // отправляем пользователю сообщение в чат
+        if (self::$handlerDisallow)
             return;
+        self::$handlerDisallow = true;
+        if (!Loader::includeModule('crm')) {
+            return;
+        }
 
-        $messageId = \CIMMessage::Add([
-            'TO_USER_ID' => 1,
-            'FROM_USER_ID' => 3, // Анна Делова
-            'MESSAGE' => 'Привет'.' '.$arFields['NAME'],
-        ]);
+        $dealId = (end($arFields['PROPERTY_VALUES']['91']));
+        $entityFields = [
+            'OPPORTUNITY'   => (end($arFields['PROPERTY_VALUES']['96'])),
+            'ASSIGNED_BY_ID' => $arFields['PROPERTY_VALUES']['93'],
+            'TITLE' => $arFields['NAME'],
+        ];
+        $entityObject = new \CCrmDeal();
 
-//        if (!$messageId) {
-//            if ($exception = $GLOBALS['APPLICATION']->GetException()) {
-//                file_put_contents($_SERVER['DOCUMENT_ROOT'].'/logIAU.txt', 'ERROR: '.var_export($exception->GetString(), true).PHP_EOL, FILE_APPEND);
-//            } else {
-//                file_put_contents($_SERVER['DOCUMENT_ROOT'].'/logIAU.txt', 'UNKNOWN_ERROR'.PHP_EOL, FILE_APPEND);
-//            }
-//        }
+        $isUpdateSuccess = $entityObject->Update(
+            $dealId,
+            $entityFields,
+        );
+        self::$handlerDisallow = false;
     }
 
-    public static function onElementBeforeDelete(&$id)
+    public static function onDealAfterUpdate(&$arFields)
     {
-        if (date('H') == self::$restrictHour)
-        {
-            global $APPLICATION;
-            $APPLICATION->throwException("Нельзя удалять в ".self::$restrictHour." часов");
-            return false;
+//        echo ''; print_r($arFields); echo ''; die();
+        if (self::$handlerDisallow)
+            return;
+        self::$handlerDisallow = true;
+        Loader::includeModule('iblock');
+        $elements = \Bitrix\Iblock\Elements\ElementZayavkaTable::query()
+            ->addSelect('NAME')
+            ->addSelect('SDELKA')
+            ->addSelect('OTVETSTVENNYY')
+            ->addSelect('SUMMA2')
+            ->fetchCollection();
+        foreach ($elements as $key => $item) {
+            $value = $item->getSdelka()->getValue();
+            if($value == $arFields['ID']) {
+                if($arFields['TITLE']){
+                    $item->setName($arFields['TITLE']);
+                    $item->save();
+                }
+                if($arFields['OPPORTUNITY']){
+                    $item->setSumma2($arFields['OPPORTUNITY']);
+                    $item->save();
+                }
+                if($arFields['ASSIGNED_BY_ID']){
+                    $item->setOtvetstvennyy($arFields['ASSIGNED_BY_ID']);
+                    $item->save();
+                }
+
+            }
         }
+        self::$handlerDisallow = false;
     }
 }
