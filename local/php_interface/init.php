@@ -39,6 +39,13 @@ $eventManager -> addEventHandler(
         'Events\IblockHandler',
         'onDealAfterUpdate'
     ]);
+$eventManager -> addEventHandler(
+    "ReportFullTable",
+    "onAfterAdd",
+    [
+        'Models\ReportFullTable',
+        'onAfterAdd'
+    ]);
 //    'OnIBlockPropertyBuildList',
 //    [
 //        'UserTypes\IBLink', // класс обработчик пользовательского типа свойства
